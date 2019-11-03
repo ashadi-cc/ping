@@ -14,7 +14,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-const MaxParalelProcess = 10
+const MaxParalelProcess = 50
 
 var configBroker = broker.Config{
 	ExchangeName: "worker-ping",
