@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"golang.org/x/time/rate"
 )
 
 //InitServer just init sever
@@ -28,5 +29,21 @@ func setupMiddleware(router *chi.Mux) {
 		middleware.StripSlashes,    // match paths with a trailing slash, strip it, and continue routing through the mux
 		middleware.Recoverer,       // recover from panics without crashing server
 		middleware.Logger,          //log api request calls
+		limit,
 	)
+}
+
+var limiter = rate.NewLimiter(10, 3)
+
+func limit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if limiter.Allow() == false {
+			message := map[string]string{
+				"error": "too many request",
+			}
+			respondJSON(w, http.StatusTooManyRequests, message)
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
