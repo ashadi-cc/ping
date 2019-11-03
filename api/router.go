@@ -33,7 +33,7 @@ func setupMiddleware(router *chi.Mux) {
 	)
 }
 
-var limiter = rate.NewLimiter(10, 3)
+var limiter = rate.NewLimiter(10, 5)
 
 func limit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +42,7 @@ func limit(next http.Handler) http.Handler {
 				"error": "too many request",
 			}
 			respondJSON(w, http.StatusTooManyRequests, message)
+			return
 		}
 
 		next.ServeHTTP(w, r)
