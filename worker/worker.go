@@ -14,7 +14,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-const MaxParalelProcess = 50
+const MaxParalelProcess = 10
 
 var configBroker = broker.Config{
 	ExchangeName: "worker-ping",
@@ -64,7 +64,7 @@ func (w *Worker) Ping(que contract.QuePing) {
 	//if ping time less than now then republish
 	if !time.Now().After(que.PingTime) {
 		//sleep 100 milisecond before publish it
-		time.Sleep(time.Millisecond * 100)
+		<-time.Tick(time.Millisecond * 100)
 		w.Publish(que)
 		return
 	}
@@ -107,13 +107,13 @@ func (w *Worker) Run(workerId int) {
 
 func (w *Worker) ProcessUrl(que contract.QuePing, workerId int) {
 	if w.workers > w.maxParalel {
-		time.Sleep(time.Millisecond * 100)
+		<-time.Tick(time.Millisecond * 100)
 	}
 
 	log.Println("Worker:", w.WorkerId, "SUB WORKER:", workerId, "Processing URL:", que.URL)
 	data := contract.UrlPayload{URL: que.URL}
 	payload, _ := json.Marshal(data)
-	response, err := http.Post("http://localhost:8080/ping", "application/json", bytes.NewBuffer(payload))
+	response, err := http.Post("http://localhost:8081/ping", "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		log.Println("Error when call api ping service:", err.Error())
 		return
@@ -124,7 +124,7 @@ func (w *Worker) ProcessUrl(que contract.QuePing, workerId int) {
 	//modify ping time with 10 second from now
 	que.PingTime = time.Now().Add(time.Second * 10)
 	//sleep 100 milisecond before publish it
-	time.Sleep(time.Millisecond * 100)
+	<-time.Tick(time.Millisecond * 100)
 	//publish url
 	w.Publish(que)
 }

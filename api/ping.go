@@ -2,15 +2,39 @@ package api
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/http/httptrace"
 	"ping/contract"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
+const maxPing = 10
+
+var currentPing = 0
+
+var m sync.Mutex
+
 func PingUrl(url string) (*contract.PingModel, error) {
+	m.Lock()
+	if currentPing > maxPing {
+		m.Unlock()
+		return nil, fmt.Errorf("max allowed ping request reached. rejected")
+	}
+
+	currentPing = currentPing + 1
+	m.Unlock()
+
+	//subtract current ping for any return condition
+	defer func() {
+		m.Lock()
+		currentPing = currentPing - 1
+		m.Unlock()
+	}()
+
 	//spesify request timeouts by default
 	http.DefaultClient.Timeout = time.Minute * 3
 	req, err := http.NewRequest("GET", url, nil)

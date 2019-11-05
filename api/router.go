@@ -13,8 +13,8 @@ import (
 func InitServer() {
 	router := chi.NewMux()
 	setupRouter(router)
-	log.Println("Serve listening on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Println("Serve listening on port 8081")
+	log.Fatal(http.ListenAndServe(":8081", router))
 }
 
 func setupRouter(router *chi.Mux) {
@@ -29,7 +29,7 @@ func setupMiddleware(router *chi.Mux) {
 		middleware.StripSlashes,    // match paths with a trailing slash, strip it, and continue routing through the mux
 		middleware.Recoverer,       // recover from panics without crashing server
 		middleware.Logger,          //log api request calls
-		limit,
+		//limit,
 	)
 }
 
